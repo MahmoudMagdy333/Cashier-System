@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import GenericModal from "./ui/modal";
 import OvalLine from "./ui/ovalLine";
+import { getAuthToken } from "@/lib/auth";
 
 interface Product {
   id?: number;
@@ -55,9 +56,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   }, [isOpen, product]);
 
+  const token = getAuthToken();
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/categories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -76,7 +82,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
       alert("Please fill in all required fields (Name, Category)");
       return;
     }
-    console.log(formData);
     onSave(formData);
     onClose();
   };
@@ -86,6 +91,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     value: string | boolean | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    console.log(formData.imageUrl);
   };
 
   const handleImageClick = () => {
@@ -101,14 +107,19 @@ const ProductModal: React.FC<ProductModalProps> = ({
     formData.append("file", file);
 
     try {
+      const token = getAuthToken();
       const res = await fetch("/api/images/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (res.ok) {
         const data = await res.json();
         handleChange("imageUrl", data.imageUrl);
+        console.log(data.imageUrl);
       } else {
         console.error("Failed to upload image");
         alert("Failed to upload image");

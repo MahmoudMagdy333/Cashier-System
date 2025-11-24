@@ -7,30 +7,19 @@ import { motion } from "motion/react";
 import OvalLine from "@/components/ui/ovalLine";
 import { useState, useEffect } from "react";
 import Pagination from "@/components/ui/pagination";
+import Image from "next/image";
+import { getAuthToken } from "@/lib/auth";
+import CashModal from "@/components/cashier/cashModal";
+import CardModal from "@/components/cashier/cardModal";
+import MixedPaymentModal from "@/components/cashier/splitModal";
 
 interface Product {
   id: number;
-  image: string;
+  imageUrl: string;
   name: string;
   price: number;
   stock: number;
 }
-
-const checkoutItems = [
-  {
-    id: 1,
-    image: "/images/product.jpg",
-    name: "Cappuccino",
-    price: 4.5,
-    quantity: 2,
-  },
-];
-
-const subtotal = checkoutItems
-  .reduce((total, item) => total + item.price * item.quantity, 0)
-  .toFixed(2);
-
-const discount = (parseFloat(subtotal) * 0.1).toFixed(2);
 
 export default function Cashier() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,11 +28,124 @@ export default function Cashier() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Cart State
+  interface CartItem {
+    id: number;
+    name: string;
+    price: number;
+    imageUrl: string;
+    quantity: number;
+  }
+
+  // Multiple Carts State
+  const [carts, setCarts] = useState<CartItem[][]>([[]]);
+  const [activeCartIndex, setActiveCartIndex] = useState(0);
+  const [isCartMenuOpen, setIsCartMenuOpen] = useState(false);
+
+  // Payment Method State
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
+
+  const togglePaymentMethod = (method: string) => {
+    setSelectedPaymentMethods((prev) =>
+      prev.includes(method)
+        ? prev.filter((m) => m !== method)
+        : [...prev, method]
+    );
+  };
+
+  const isCardSelected = selectedPaymentMethods.includes("card");
+  const isCashSelected = selectedPaymentMethods.includes("cash");
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
 
+
+  const addToCart = (product: Product) => {
+    setCarts((prevCarts) => {
+      const newCarts = [...prevCarts];
+      const currentCart = [...newCarts[activeCartIndex]];
+      const existingItemIndex = currentCart.findIndex((item) => item.id === product.id);
+
+      if (existingItemIndex > -1) {
+        currentCart[existingItemIndex] = {
+          ...currentCart[existingItemIndex],
+          quantity: currentCart[existingItemIndex].quantity + 1,
+        };
+      } else {
+        currentCart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          quantity: 1,
+        });
+      }
+
+      newCarts[activeCartIndex] = currentCart;
+      return newCarts;
+    });
+  };
+
+  const updateQuantity = (productId: number, delta: number) => {
+    setCarts((prevCarts) => {
+      const newCarts = [...prevCarts];
+      const currentCart = newCarts[activeCartIndex]
+        .map((item) => {
+          if (item.id === productId) {
+            return { ...item, quantity: item.quantity + delta };
+          }
+          return item;
+        })
+        .filter((item) => item.quantity > 0);
+
+      newCarts[activeCartIndex] = currentCart;
+      return newCarts;
+    });
+  };
+
+  const addNewCart = () => {
+    setCarts((prev) => [...prev, []]);
+    setActiveCartIndex(carts.length); // Switch to the new cart (length before update is index of new item)
+    setIsCartMenuOpen(false);
+  };
+
+  const switchCart = (index: number) => {
+    setActiveCartIndex(index);
+    setIsCartMenuOpen(false);
+  };
+
+  const deleteCart = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent switching when clicking delete
+    if (carts.length === 1) {
+      // If only one cart, just clear it
+      setCarts([[]]);
+      return;
+    }
+
+    setCarts((prev) => {
+      const newCarts = prev.filter((_, i) => i !== index);
+      return newCarts;
+    });
+
+    // Adjust active index if needed
+    if (activeCartIndex >= index && activeCartIndex > 0) {
+      setActiveCartIndex(activeCartIndex - 1);
+    } else if (activeCartIndex === index) {
+      setActiveCartIndex(0);
+    }
+  };
+
+  const activeCartItems = carts[activeCartIndex] || [];
+
+  const subtotal = activeCartItems
+    .reduce((total, item) => total + item.price * item.quantity, 0)
+    .toFixed(2);
+
+  const totalAmount = subtotal;
+
+  const token = getAuthToken();
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -59,7 +161,11 @@ export default function Cashier() {
         params.append("pageSize", pageSize.toString());
 
         const url = `/api/products${params.toString() ? `?${params.toString()}` : ""}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch products");
         }
@@ -78,7 +184,7 @@ export default function Cashier() {
         }
 
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "حدث خطأ غير متوقع";
+        const errorMessage = err instanceof Error ? err.message : "unexpected error";
         setError(errorMessage);
         console.error("Error fetching products:", err);
       } finally {
@@ -94,9 +200,142 @@ export default function Cashier() {
     setCurrentPage(1);
   }, [selectedCategoryId, searchQuery]);
 
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+
+  const processSale = async (details: { change: number; method: string; cashAmount?: number; cardAmount?: number }) => {
+    try {
+      const saleDetails = activeCartItems.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      }));
+
+      const payload = {
+        saleDetails,
+        paymentMethod: details.method,
+        splitCashAmount: details.cashAmount || 0,
+        splitCardAmount: details.cardAmount || 0,
+      };
+
+      const response = await fetch("/api/sale", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process sale");
+      }
+
+      // Success
+      console.log(`Order Confirmed! Change: $${details.change.toFixed(2)}`);
+
+      // Clear the cart
+      setCarts((prev) => {
+        const newCarts = [...prev];
+        newCarts[activeCartIndex] = [];
+        return newCarts;
+      });
+
+      alert(`Order Confirmed! Change: $${details.change.toFixed(2)}`);
+
+      // Close modals
+      setIsCashModalOpen(false);
+      setIsCardModalOpen(false);
+      setIsSplitModalOpen(false);
+
+    } catch (err) {
+      console.error("Sale processing error:", err);
+      alert(err instanceof Error ? err.message : "Failed to process sale");
+    }
+  };
+
+  const handleConfirmOrder = () => {
+    if (activeCartItems.length === 0) {
+      alert("Cart is empty!");
+      return;
+    }
+
+    const isCash = selectedPaymentMethods.includes("cash");
+    const isCard = selectedPaymentMethods.includes("card");
+
+    if (isCash && isCard) {
+      setIsSplitModalOpen(true);
+    } else if (isCash) {
+      setIsCashModalOpen(true);
+    } else if (isCard) {
+      setIsCardModalOpen(true);
+    } else {
+      alert("Please select a payment method.");
+    }
+  };
+
   return (
     <div className="w-full grid grid-cols-7 gap-6 mt-4">
-      <CashierNav onCategoryChange={setSelectedCategoryId} />
+      <div className="col-span-5 flex flex-row gap-4">
+
+        <div className="relative z-50">
+          <button
+            className="relative bg-white w-30 h-20 flex items-center justify-center rounded-4xl cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => setIsCartMenuOpen(!isCartMenuOpen)}
+          >
+            <Image src="/icons/cartIcon.svg" alt="cartIcon" width={35} height={35} />
+            <span className="absolute top-0 right-0 w-5 h-5 text-white text-xs flex items-center justify-center bg-main-color rounded-full">
+              {activeCartItems.reduce((acc, item) => acc + item.quantity, 0)}
+            </span>
+          </button>
+
+          {isCartMenuOpen && (
+            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <span className="font-bold text-gray-700">Carts</span>
+                <button
+                  onClick={addNewCart}
+                  className="text-xs bg-main-color text-white px-2 py-1 rounded-lg hover:bg-opacity-90 transition-colors"
+                >
+                  + New Cart
+                </button>
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                {carts.map((cart, index) => (
+                  <div
+                    key={index}
+                    onClick={() => switchCart(index)}
+                    className={`p-3 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors ${activeCartIndex === index ? 'bg-orange-50 border-l-4 border-main-color' : ''}`}
+                  >
+                    <div className="flex flex-col">
+                      <span className={`font-medium ${activeCartIndex === index ? 'text-main-color' : 'text-gray-700'}`}>
+                        Cart #{index + 1}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {cart.reduce((acc, item) => acc + item.quantity, 0)} items
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => deleteCart(index, e)}
+                      className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
+                      title="Delete Cart"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <CashierNav onCategoryChange={setSelectedCategoryId} />
+
+      </div>
       <div className="bg-white rounded-l-4xl col-span-2 flex flex-row items-center justify-center gap-3 px-10">
         <Search className="text-main-color" size={30} />
         <input
@@ -122,9 +361,16 @@ export default function Cashier() {
               <p className="text-lg text-secondary-color">No products available</p>
             </div>
           ) : (
-            products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
+            products.map((product) => {
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={addToCart}
+                  isInCart={activeCartItems.some((item) => item.id === product.id)}
+                />
+              )
+            })
           )}
         </div>
 
@@ -143,8 +389,13 @@ export default function Cashier() {
 
       <section className="col-span-2 h-lvh flex flex-col justify-between bg-white rounded-4xl">
         <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-220px)] p-5">
-          {checkoutItems.map((item) => (
-            <CheckoutProductItem key={item.id} product={item} />
+          {activeCartItems.map((item) => (
+            <CheckoutProductItem
+              key={item.id}
+              item={item}
+              onIncrease={() => updateQuantity(item.id, 1)}
+              onDecrease={() => updateQuantity(item.id, -1)}
+            />
           ))}
         </div>
 
@@ -155,34 +406,71 @@ export default function Cashier() {
             </p>
             <p className="font-extrabold ">${subtotal}</p>
           </div>
-          <div className="flex justify-between text-lg">
-            <p className="font-semibold text-secondary-color text-lg">
-              Discount:
-            </p>
-            <p className="font-extrabold ">${discount}</p>
-          </div>
+
           <OvalLine className="my-4 h-px" />
           <div className="flex justify-between text-lg">
             <p className="font-semibold text-secondary-color text-lg">Total:</p>
             <p className="font-extrabold ">
-              {(parseFloat(subtotal) - parseFloat(discount)).toFixed(2)}
+              ${totalAmount}
             </p>
           </div>
         </div>
+        {/* Payment Methods */}
         <div className="flex flex-col gap-y-2 items-end">
-          <motion.button className="w-4/7 flex items-center justify-center gap-3 text-xl bg-secondary-color text-white font-bold py-4 rounded-l-4xl cursor-pointer">
+          <motion.button
+            className="flex items-center justify-center gap-3 text-xl text-white font-bold py-4 rounded-l-4xl cursor-pointer"
+            onClick={() => togglePaymentMethod("card")}
+            initial={false}
+            animate={{
+              width: isCardSelected ? "71.42%" : "57.14%", // 5/7 vs 4/7
+              backgroundColor: isCardSelected ? "#bc7428" : "#848382",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
             <CreditCard size={35} />
             Card
           </motion.button>
-          <motion.button className="w-4/7 flex items-center justify-center gap-3 text-xl bg-secondary-color text-white font-bold py-4 rounded-l-4xl cursor-pointer">
+          <motion.button
+            className="flex items-center justify-center gap-3 text-xl text-white font-bold py-4 rounded-l-4xl cursor-pointer"
+            onClick={() => togglePaymentMethod("cash")}
+            initial={false}
+            animate={{
+              width: isCashSelected ? "71.42%" : "57.14%", // 5/7 vs 4/7
+              backgroundColor: isCashSelected ? "#bc7428" : "#848382",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
             <Coins size={35} />
             Cash
           </motion.button>
-          <button className="w-full bg-black text-white text-xl font-bold py-4 rounded-l-4xl cursor-pointer">
+          <button
+            className="w-full bg-black text-white text-xl font-bold py-4 rounded-l-4xl cursor-pointer"
+            onClick={handleConfirmOrder}
+          >
             Confirm Order
           </button>
         </div>
       </section>
+
+      <CashModal
+        isOpen={isCashModalOpen}
+        onClose={() => setIsCashModalOpen(false)}
+        totalPrice={parseFloat(totalAmount)}
+        confirmOrder={(change: number) => processSale({ change, method: "cash" })}
+      />
+      <CardModal
+        isOpen={isCardModalOpen}
+        onClose={() => setIsCardModalOpen(false)}
+        onConfirm={() => processSale({ change: 0, method: "card" })}
+      />
+      <MixedPaymentModal
+        isOpen={isSplitModalOpen}
+        onClose={() => setIsSplitModalOpen(false)}
+        totalPrice={parseFloat(totalAmount)}
+        onConfirm={({ cash, card, change }) =>
+          processSale({ change, method: "split", cashAmount: cash, cardAmount: card })
+        }
+      />
     </div>
   );
 }

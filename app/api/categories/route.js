@@ -1,9 +1,8 @@
-import { cookies } from "next/headers";
+import { getClientToken } from "@/lib/auth";
 
-export async function GET() {
-  //   const token = cookies().get("token")?.value;
-  const token =
-    "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhZG1pbiIsIm5iZiI6MTc2MzE5NDQ4NSwiZXhwIjoxNzYzNzk5Mjg1LCJpYXQiOjE3NjMxOTQ0ODV9.3mE80Lp95QdRmS2pNQkvWCX2ca_2ntipWrGnVJv6NTsBGOLHEZSU5bJcKnCwwgtXYUrT74yk0sZrrLWidOkCdw";
+export async function GET(request) {
+  const token = getClientToken(request);
+
 
   if (!token) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -25,7 +24,7 @@ export async function GET() {
   }
 
   const data = await res.json();
-  
+
   // Return only id and name for each category
   const categories = data.map((category) => ({
     id: category.id,

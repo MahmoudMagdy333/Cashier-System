@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-
+import { getAuthToken } from "@/lib/auth";
 // 1. Define Data Type
 interface CashierData {
   userId: number;
@@ -22,10 +22,15 @@ const CashierPerformance = () => {
   const [cashiers, setCashiers] = useState<CashierDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchCashiers = async () => {
       try {
-        const res = await fetch("/api/dashboard/cashierperformance");
+        const res = await fetch("/api/dashboard/cashierperformance", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch cashier performance");
         const data: CashierData[] = await res.json();
 

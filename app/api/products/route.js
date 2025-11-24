@@ -1,10 +1,7 @@
-import { cookies } from "next/headers";
-
-const token =
-  "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhZG1pbiIsIm5iZiI6MTc2Mzg0ODQxMCwiZXhwIjoxNzY0NDUzMjEwLCJpYXQiOjE3NjM4NDg0MTB9.vB8H0ikfeVXvzFpF96gFjVgtV1Q0gEAQFjkzHm6iY7ODc_SDyNiDETwV2w2O-p8vjNTCWqvJ0zYOy3icwKs0Dw";
+import { getClientToken } from "@/lib/auth";
 
 export async function GET(request) {
-  //   const token = cookies().get("token")?.value;
+  const token = getClientToken(request);
 
   if (!token) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -52,6 +49,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const token = getClientToken(request);
   if (!token) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,

@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+import { getAuthToken } from "@/lib/auth";
 
 // 1. Define Data Type
 interface Product {
@@ -15,10 +16,15 @@ const TopSellingProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("/api/dashboard/topselling?count=4");
+        const res = await fetch("/api/dashboard/topselling?count=4", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch top selling products");
         const data = await res.json();
         if (Array.isArray(data)) {

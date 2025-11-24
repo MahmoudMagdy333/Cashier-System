@@ -1,0 +1,250 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+    Search,
+    LayoutGrid,
+    Receipt,
+    Pencil,
+    Plus,
+    SlidersHorizontal
+} from "lucide-react";
+import DataCard from "@/components/dashboard/dataCard";
+import Pagination from "@/components/ui/pagination";
+import { getAuthToken } from "@/lib/auth";
+
+interface Expense {
+    id: number;
+    date: string;
+    description: string;
+    amount: number;
+    categoryId: number;
+    categoryName: string;
+    recordedByUserName: string;
+}
+
+const ExpensesPage = () => {
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const token = getAuthToken();
+
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            try {
+                setLoading(true);
+                const params = new URLSearchParams();
+                if (searchQuery.trim()) {
+                    params.append("search", searchQuery.trim());
+                }
+                params.append("pageNumber", currentPage.toString());
+                params.append("pageSize", pageSize.toString());
+
+                const response = await fetch(`/api/expenses?${params.toString()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch expenses");
+                }
+
+                const data = await response.json();
+
+                // Handle potential different response structures
+                if (data.data && Array.isArray(data.data)) {
+                    setExpenses(data.data);
+                    setTotalRecords(data.totalRecords || 0);
+                } else if (Array.isArray(data)) {
+                    setExpenses(data);
+                    setTotalRecords(data.length);
+                } else {
+                    setExpenses([]);
+                    setTotalRecords(0);
+                }
+
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : "unexpected error";
+                setError(errorMessage);
+                console.error("Error fetching expenses:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExpenses();
+    }, [currentPage, pageSize, searchQuery, token]);
+
+    // Helper to get category badge styles
+    const getCategoryStyle = (category: string) => {
+        switch (category) {
+            case "Utilities":
+                return "bg-blue-100 text-blue-700";
+            case "Raw Material":
+                return "bg-green-100 text-green-700";
+            case "Supplies":
+                return "bg-yellow-100 text-yellow-700";
+            default:
+                return "bg-gray-100 text-gray-700";
+        }
+    };
+
+    return (
+        <div className="min-h-screen mt-20 mr-20">
+            {/* --- Header Section --- */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Expenses</h1>
+                    <p className="text-secondary-color mt-2 text-2xl">Manage and track all bakery expenses</p>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative w-full md:w-60">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
+                    <input
+                        type="text"
+                        placeholder="Search expenses..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to page 1 on search
+                        }}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none"
+                    />
+                </div>
+            </div>
+
+            {/* --- Stats Cards --- */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <DataCard
+                    title="Total Expenses"
+                    value="$3,933"
+                    countText="This month"
+                    percentage={12.5}
+                    isPositive={true}
+                // Banknote is default in your component, but explicit is fine
+                />
+                <DataCard
+                    title="Transactions"
+                    value="127"
+                    countText="Expense entries"
+                    percentage={3.5}
+                    isPositive={true}
+                    icon={Receipt}
+                />
+                <DataCard
+                    title="Categories"
+                    value="8"
+                    countText="Active categories"
+                    // Note: Your DataCard forces a percentage. passing 0 or a dummy value here.
+                    percentage={0}
+                    isPositive={true}
+                    icon={LayoutGrid}
+                />
+            </div>
+
+            {/* --- Main Content Card --- */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+                {/* Table Header / Actions */}
+                <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-100">
+                    <h2 className="text-2xl font-bold text-gray-900">Expense Records</h2>
+                    <div className="flex items-center gap-3">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-[#1F2937] text-white rounded-2xl text-base font-bold hover:bg-gray-800 transition-colors">
+                            <SlidersHorizontal size={16} />
+                            Category
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-[#16A34A] text-white rounded-2xl font-bold text-base hover:bg-[#16A34A]/90 transition-colors shadow-sm">
+                            <Plus size={18} />
+                            Add New Expense
+                        </button>
+                    </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-4">Date</th>
+                                <th className="px-6 py-4">Description</th>
+                                <th className="px-6 py-4">Recorded By</th>
+                                <th className="px-6 py-4">Amount</th>
+                                <th className="px-6 py-4">Category</th>
+                                <th className="px-6 py-4 text-right"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                        Loading expenses...
+                                    </td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-10 text-center text-red-500">
+                                        Error: {error}
+                                    </td>
+                                </tr>
+                            ) : expenses.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                        No expenses found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                expenses.map((item) => (
+                                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-6 py-5 text-sm font-semibold text-gray-700">
+                                            {new Date(item.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-5 text-sm font-semibold text-black">
+                                            {item.description}
+                                        </td>
+                                        <td className="px-6 py-5 text-sm text-black font-bold">
+                                            {item.recordedByUserName}
+                                        </td>
+                                        <td className="px-6 py-5 text-sm font-bold text-gray-900">
+                                            ${item.amount.toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getCategoryStyle(item.categoryName)}`}>
+                                                {item.categoryName}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-5 text-right">
+                                            <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                                                <Pencil size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination */}
+                {!loading && !error && totalRecords > 0 && (
+                    <div className="border-t border-gray-100">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={totalRecords}
+                            itemsPerPage={pageSize}
+                            onPageChange={setCurrentPage}
+                        />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default ExpensesPage;

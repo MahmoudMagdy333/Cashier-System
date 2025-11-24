@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, XCircle, Info } from "lucide-react";
-
+import { getAuthToken } from "@/lib/auth";
 interface Notification {
   type: string;
   message: string;
@@ -14,10 +14,15 @@ const NotificationsCard = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/dashboard/notifications");
+        const res = await fetch("/api/dashboard/notifications", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch notifications");
         const data = await res.json();
         if (Array.isArray(data)) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import OvalLine from "../ui/ovalLine"; // Ensure this path is correct
-
+import { getAuthToken } from "@/lib/auth";
 // --- Types & Mock Data ---
 
 interface ClientData {
@@ -23,10 +23,15 @@ const TopClients = () => {
     totalOutstanding: 0,
   });
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await fetch("/api/dashboard/topclients?count=4");
+        const res = await fetch("/api/dashboard/topclients?count=4", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch top clients");
         const data: ClientData[] = await res.json();
         setClients(data);

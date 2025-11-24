@@ -11,6 +11,7 @@ import TopClients from "@/components/dashboard/topClients";
 import { ShoppingBag, Users } from "lucide-react";
 import NotificationsCard from "@/components/dashboard/alertSection";
 import { ReportsModal } from "@/components/dashboard/reportsModal";
+import { getAuthToken } from "@/lib/auth";
 
 interface DashboardSummary {
   todaysSales: number;
@@ -30,10 +31,15 @@ export default function DashboardPage() {
 
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false)
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const res = await fetch("/api/dashboard/summary");
+        const res = await fetch("/api/dashboard/summary", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch summary");
         const data = await res.json();
         setSummary(data);

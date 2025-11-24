@@ -1,15 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import GenericModal from "../ui/modal"; // Import the new reusable component
-
-// Types
-interface Client {
-  name: string;
-  image: string;
-  discountPercentage: string;
-  phoneNumber: string;
-  active: boolean;
-}
+import GenericModal from "../ui/modal";
+import { Client } from "@/types/premiumClients";
+import { getAuthToken } from "@/lib/auth";
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -25,16 +18,21 @@ const ClientModal: React.FC<ClientModalProps> = ({
   onSave,
 }) => {
   const defaultValues: Client = {
+    id: 0,
     name: "",
     image: "",
-    discountPercentage: "",
-    phoneNumber: "",
+    discountPercentage: 0,
+    currentBalance: 0,
     active: true,
+    phoneNumber: "",
+    address: "",
+    createdAt: new Date().toISOString(),
   };
   const [formData, setFormData] = useState<Client>(defaultValues);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 2. THIS IS THE KEY: Sync state when the `client` prop changes
-  // If client exists, fill form. If null, reset to defaults.
+  // Sync state when the `client` prop changes
   React.useEffect(() => {
     if (isOpen) {
       setFormData(client || defaultValues);
@@ -45,13 +43,53 @@ const ClientModal: React.FC<ClientModalProps> = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+      const token = getAuthToken();
+      const res = await fetch("/api/images/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: uploadData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        handleChange("image", data.imageUrl);
+      } else {
+        console.error("Failed to upload image");
+        alert("Failed to upload image");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Error uploading image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = () => {
-    if (!formData.name || !formData.discountPercentage) return;
+    if (!formData.name) {
+      alert("Please enter a name");
+      return;
+    }
     onSave(formData);
     onClose();
   };
 
-  // Reusable Toggle UI (defined here to reuse in Header AND Mobile view)
+  // Reusable Toggle UI
   const ActiveToggle = (
     <>
       <span className="text-xs md:text-sm lg:text-3xl text-black sm:block hidden">
@@ -60,19 +98,17 @@ const ClientModal: React.FC<ClientModalProps> = ({
       <button
         type="button"
         onClick={() => handleChange("active", !formData.active)}
-        className={`relative inline-flex h-6 w-12 sm:h-7 sm:w-14 md:h-8 md:w-16 lg:h-10 lg:w-20 items-center rounded-full transition-colors ${
-          formData.active ? "bg-main-color" : "bg-secondary-color"
-        }`}
+        className={`relative inline-flex h-6 w-12 sm:h-7 sm:w-14 md:h-8 md:w-16 lg:h-10 lg:w-20 items-center rounded-full transition-colors ${formData.active ? "bg-main-color" : "bg-secondary-color"
+          }`}
       >
         <span className="sr-only">Toggle active</span>
         <motion.span
           layout
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className={`inline-block h-5 w-5 sm:h-5.5 sm:w-5.5 md:h-6 md:w-6 lg:h-8 lg:w-8 transform rounded-full bg-white shadow-lg ${
-            formData.active
-              ? "translate-x-6 sm:translate-x-7 md:translate-x-8 lg:translate-x-11"
-              : "translate-x-1"
-          }`}
+          className={`inline-block h-5 w-5 sm:h-5.5 sm:w-5.5 md:h-6 md:w-6 lg:h-8 lg:w-8 transform rounded-full bg-white shadow-lg ${formData.active
+            ? "translate-x-6 sm:translate-x-7 md:translate-x-8 lg:translate-x-11"
+            : "translate-x-1"
+            }`}
         />
         {formData.active && (
           <span className="absolute left-1 sm:left-1.5 md:left-2 text-[8px] sm:text-[9px] md:text-xs font-bold text-white">
@@ -88,12 +124,32 @@ const ClientModal: React.FC<ClientModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={formData.name || "New Client"}
-      subtitle={formData.discountPercentage || "No discount set"}
-      imageSrc={client?.image}
-      headerAction={ActiveToggle} // Pass the toggle to the header
+      subtitle={formData.discountPercentage ? formData.discountPercentage + "%" : "No discount set"}
+      imageSrc={formData.image}
+      headerAction={ActiveToggle}
+      onImageClick={handleImageClick}
     >
       <div className="">
-        {/* Mobile Only Active Toggle (Matches your original design) */}
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          accept="image/*"
+          className="hidden"
+        />
+
+        {/* Loading Overlay for Image Upload */}
+        {isUploading && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+            <div className="bg-white p-3 rounded-xl shadow-lg flex flex-col items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C2782F] mb-2"></div>
+              <span className="text-xs font-semibold text-gray-600">Uploading...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Only Active Toggle */}
         <div className="flex sm:hidden items-center justify-between py-2 border-b">
           <label className="text-sm font-semibold text-secondary-color">
             Active
@@ -112,7 +168,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
             placeholder="Your name"
-            className="text-sm sm:text-base md:text-xl lg:text-2xl text-secondary-color text-right outline-none w-2/3 placeholder:text-secondary-color"
+            className="text-sm sm:text-base md:text-xl lg:text-2xl text-right outline-none w-2/3 placeholder:text-secondary-color"
           />
         </div>
 
@@ -121,24 +177,24 @@ const ClientModal: React.FC<ClientModalProps> = ({
             Discount
           </label>
           <input
-            type="text"
+            type="number"
             value={formData.discountPercentage}
-            onChange={(e) => handleChange("discountPercentage", e.target.value)}
+            onChange={(e) => handleChange("discountPercentage", Number(e.target.value))}
             placeholder="0%"
-            className="text-sm sm:text-base md:text-xl lg:text-2xl text-secondary-color text-right outline-none w-2/3 placeholder:text-secondary-color"
+            className="text-sm sm:text-base md:text-xl lg:text-2xl text-right outline-none w-2/3 placeholder:text-secondary-color"
           />
         </div>
 
         <div className="flex items-center justify-between py-2 sm:py-3 md:py-4">
           <label className="text-sm sm:text-base md:text-xl lg:text-3xl text-black w-1/3">
-            Phone Number
+            Balance
           </label>
           <input
-            type="tel"
-            value={formData.phoneNumber}
-            onChange={(e) => handleChange("phoneNumber", e.target.value)}
-            placeholder="+1 234 567"
-            className="text-sm sm:text-base md:text-xl lg:text-2xl text-secondary-color text-right outline-none w-2/3 placeholder:text-secondary-color"
+            type="number"
+            value={formData.currentBalance}
+            onChange={(e) => handleChange("currentBalance", Number(e.target.value))}
+            placeholder="0"
+            className="text-sm sm:text-base md:text-xl lg:text-2xl text-right outline-none w-2/3 placeholder:text-secondary-color"
           />
         </div>
 

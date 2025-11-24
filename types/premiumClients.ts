@@ -5,4 +5,7 @@ export type Client = {
   address: string;
   currentBalance: number;
   discountPercentage: number;
+  createdAt: string;
+  image?: string;
+  active?: boolean;
 };

@@ -3,6 +3,8 @@ import { ArrowDown, LockKeyhole } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
+import { setAuthData } from "@/lib/auth";
+
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,7 +21,7 @@ export default function Login() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
@@ -31,8 +33,11 @@ export default function Login() {
         return;
       }
 
+      const data = await res.json();
+      setAuthData(data);
+
       setLoading(false);
-      window.location.href = "/chasier";
+      window.location.href = "/cashier";
     } catch (error) {
       setError("Network error");
       setLoading(false);

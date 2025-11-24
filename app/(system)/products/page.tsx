@@ -8,6 +8,7 @@ import Pagination from "@/components/ui/pagination";
 import { AnimatePresence, motion } from "motion/react";
 
 import { TextAlignStart } from "lucide-react";
+import { getAuthToken } from "@/lib/auth";
 
 export function CashierNav({
   selectedCategory,
@@ -21,10 +22,15 @@ export function CashierNav({
   );
   const [isOpen, setIsOpen] = useState(false);
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch("/api/categories", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -129,6 +135,7 @@ const Products = () => {
   const [totalRecords, setTotalRecords] = useState(0);
 
   // Fetch products when category, search, or page changes
+  const token = getAuthToken();
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
@@ -139,7 +146,11 @@ const Products = () => {
         params.append("pageNumber", currentPage.toString());
         params.append("pageSize", pageSize.toString());
 
-        const res = await fetch(`/api/products?${params.toString()}`);
+        const res = await fetch(`/api/products?${params.toString()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
 
@@ -194,14 +205,14 @@ const Products = () => {
         // Update existing product
         res = await fetch(`/api/products/${updatedProduct.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(updatedProduct),
         });
       } else {
         // Create new product
         res = await fetch("/api/products", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(updatedProduct),
         });
       }
@@ -226,6 +237,7 @@ const Products = () => {
       try {
         const res = await fetch(`/api/products/${id}`, {
           method: "DELETE",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) {

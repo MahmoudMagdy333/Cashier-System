@@ -1,28 +1,128 @@
-import { ArrowBigRight, BadgePercent } from "lucide-react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { ArrowBigRight, BadgePercent, Search } from "lucide-react";
 import { Client } from "@/types/premiumClients";
 import DataTable from "@/components/premiumClients/dataTable";
 import { getColumns } from "@/components/premiumClients/columns";
+import Pagination from "@/components/ui/pagination";
+import { useRouter } from 'next/navigation'; // For App Router
+import { getAuthToken } from "@/lib/auth";
 
-async function fetchClients(): Promise<Client[]> {
-  // Replace with your real API endpoint
-  const res = await fetch("https://swagger.quoril.space/api/Customers/", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhZG1pbiIsIm5iZiI6MTc2MzE5NDQ4NSwiZXhwIjoxNzYzNzk5Mjg1LCJpYXQiOjE3NjMxOTQ0ODV9.3mE80Lp95QdRmS2pNQkvWCX2ca_2ntipWrGnVJv6NTsBGOLHEZSU5bJcKnCwwgtXYUrT74yk0sZrrLWidOkCdw`,
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    // handle errors or return empty array
-    return [];
-  }
-  return res.json();
-}
+export default function PremiumClientsPage() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const router = useRouter();
 
-export default async function PremiumClientsPage() {
-  const clients = await fetchClients();
-  console.log("Fetched clients:", clients);
+  const fetchClients = async () => {
+    const token = getAuthToken();
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append("search", searchQuery.trim());
+      params.append("pageNumber", currentPage.toString());
+      params.append("pageSize", pageSize.toString());
+
+      const res = await fetch(`/api/customers?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch clients");
+      const data = await res.json();
+
+      if (data.data && Array.isArray(data.data)) {
+        setClients(data.data);
+        setTotalRecords(data.totalRecords || 0);
+      } else {
+        setClients([]);
+        setTotalRecords(0);
+      }
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchClients();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handleSaveClient = async (client: Client) => {
+    const token = getAuthToken();
+    try {
+      let res;
+      if (client.id && client.id !== 0) {
+        // Update existing client
+        res = await fetch(`/api/customers/${client.id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(client),
+        });
+      } else {
+        // Create new client
+        res = await fetch("/api/customers", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(client),
+        });
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save client");
+      }
+
+      fetchClients(); // Refresh list
+    } catch (error) {
+      console.error("Error saving client:", error);
+      alert(error instanceof Error ? error.message : "Failed to save client");
+    }
+  };
+
+  const handleDeleteClient = async (client: Client) => {
+    const token = getAuthToken();
+    if (!confirm("Are you sure you want to delete this client?")) return;
+
+    try {
+      const res = await fetch(`/api/customers/${client.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete client");
+      }
+
+      fetchClients(); // Refresh list
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      alert("Failed to delete client");
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-between mt-20 mr-20">
@@ -30,12 +130,35 @@ export default async function PremiumClientsPage() {
           <h1 className="text-4xl font-bold">Premium Clients</h1>
           <BadgePercent className="text-main-color" size={35} />
         </div>
-        <div className="flex items-center text-white bg-main-color gap-2 py-2 px-5 rounded-2xl">
-          <button className="text-xl font-semibold">Next</button>
-          <ArrowBigRight />
-        </div>
+
+        <button onClick={() => { selectedClient ? router.push(`/premiumClients/${selectedClient?.id}`) : alert("Please select a client") }} className="flex items-center justify-center gap-3 bg-main-color hover:bg-[#a6652d] transition-colors text-white text-2xl px-4 py-4 rounded-3xl font-semibold w-64">
+          <svg width="30" height="26" viewBox="0 0 30 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M1.33337 23.8908C4.5956 19.9086 7.49249 17.6491 10.024 17.1122C12.5556 16.5753 14.9658 16.4942 17.2547 16.8688V24.0002L28 12.3635L17.2547 1.3335V8.1115C13.0223 8.14483 9.42404 9.66327 6.46004 12.6668C3.49693 15.6704 1.78804 19.4117 1.33337 23.8908Z" fill="white" stroke="white" strokeWidth="2.66667" strokeLinejoin="round" />
+          </svg>
+          Next
+        </button>
       </div>
-      <DataTable getColumns={getColumns} data={clients} />
+
+      <div className="flex flex-col">
+        <DataTable
+          getColumns={getColumns}
+          data={clients}
+          passSelectedClient={setSelectedClient}
+          onSave={handleSaveClient}
+          onDelete={handleDeleteClient}
+        />
+
+        {!isLoading && totalRecords > 0 && (
+          <div className="mr-20 mt-4 p-4 bg-white rounded-3xl border border-gray-100">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalRecords}
+              itemsPerPage={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
     </>
   );
 }

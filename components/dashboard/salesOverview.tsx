@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import SpendingAreaChart from "@/components/areaChart";
+import { getAuthToken } from "@/lib/auth";
 
 interface SalesData {
   label: string;
@@ -12,11 +13,16 @@ const SalesOverview = () => {
   const [chartData, setChartData] = useState<{ day: string; amount: number }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const token = getAuthToken();
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/salesovertime/?period=${activeTab}`);
+        const res = await fetch(`/api/dashboard/salesovertime/?period=${activeTab}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch sales data");
         const data: SalesData[] = await res.json();
 

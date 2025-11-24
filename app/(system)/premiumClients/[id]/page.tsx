@@ -6,6 +6,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { getAuthToken } from "@/lib/auth";
 
 interface CustomerData {
   id: number;
@@ -78,11 +79,10 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">{name}</h2>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                status === "Active"
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${status === "Active"
                   ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-600"
-              }`}
+                }`}
             >
               {status}
             </span>
@@ -154,7 +154,12 @@ export default function PremiumClientPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/customers/${id}`);
+        const token = getAuthToken();
+        const response = await fetch(`/api/customers/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch customer data");

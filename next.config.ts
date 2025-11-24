@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["swagger.quoril.space"],
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "swagger.quoril.space",
+        port: "",
+        pathname: "/**", // allow all paths
+      },
+      {
+        protocol: "https",
+        hostname: "swagger.quoril.space",
+        port: "",
+        pathname: "/**", // allow all paths over HTTPS too
+      },
+    ],
   },
 };
 

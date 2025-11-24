@@ -15,11 +15,12 @@ export interface User {
   id?: number; // Optional for new users before saving to DB
   username: string;
   fullName: string;
-  permissions: string; // The API returns a string role/permission set name?
+  password?: string;
   isActive: boolean;
   createdAt: string;
   role: string;
   image?: string; // Optional, might not be in API but used in UI
+  permissions: number; // Add this!
 }
 
 // Default initial state for a new user
@@ -28,7 +29,7 @@ export const initialUserPermissions: UserPermissions = {};
 export const emptyUser: User = {
   username: "",
   fullName: "",
-  permissions: "",
+  permissions: 0,
   isActive: true,
   createdAt: new Date().toISOString(),
   role: "",

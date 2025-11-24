@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Store,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -37,7 +38,7 @@ const Sidebar = () => {
   ];
 
   const options = [
-    { name: "settings", icon: <Settings size={30} />, label: "Settings" },
+    { name: "expenses", icon: <Store size={30} />, label: "Expenses" },
     { name: "logout", icon: <LogOut size={30} />, label: "Logout" },
   ];
 
@@ -79,9 +80,9 @@ const Sidebar = () => {
           <Link
             key={link.name}
             href={`/${link.name}`}
-            className={`${
-              pathname === `/${link.name}` && "bg-main-color text-white"
-            } my-2 text-main-color rounded-2xl p-3 hover:bg-main-color hover:text-white transition-colors w-full flex items-center gap-4`}
+            className={`${pathname === `/${link.name}` && "bg-main-color text-white"}
+            ${pathname === `/premiumCashier` && link.name === "premiumClients" && "bg-main-color text-white"}
+             my-2 text-main-color rounded-2xl p-3 hover:bg-main-color hover:text-white transition-colors w-full flex items-center gap-4`}
           >
             <span className="shrink-0">{link.icon}</span>
             <motion.span
@@ -104,9 +105,8 @@ const Sidebar = () => {
           <Link
             key={option.name}
             href={`/${option.name}`}
-            className={`${
-              pathname === `/${option.name}` && "bg-main-color text-white"
-            } my-2 text-main-color rounded-2xl p-3 hover:bg-main-color hover:text-white transition-colors w-full flex items-center gap-4`}
+            className={`${pathname === `/${option.name}` && "bg-main-color text-white"
+              } my-2 text-main-color rounded-2xl p-3 hover:bg-main-color hover:text-white transition-colors w-full flex items-center gap-4`}
           >
             <span className="shrink-0">{option.icon}</span>
             <motion.span

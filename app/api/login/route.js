@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-
 export async function POST(req) {
   const { username, password } = await req.json();
 
@@ -26,19 +24,11 @@ export async function POST(req) {
 
   const data = await response.json(); // contains token
 
-  const cookieStore = cookies();
-
-  // Save JWT in a secure HttpOnly cookie
-  cookieStore.set("token", data.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
-
-  // Return user info (without token)
+  // Return user info and token
   return Response.json({
+    token: data.token,
     username: data.username,
     fullName: data.fullName,
+    role: data.role,
   });
 }

@@ -2,6 +2,7 @@
 import { TextAlignStart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getAuthToken } from "@/lib/auth";
 
 interface Category {
   id: number;
@@ -22,11 +23,16 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch categories from API
+  const token = getAuthToken();
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/categories");
+        const response = await fetch("/api/categories", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch categories");
         }
@@ -73,7 +79,7 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
   };
 
   return (
-    <div className="relative col-span-5 h-20">
+    <div className="relative col-span-5 w-full h-20">
       <div className="col-span-2 flex items-start absolute right-0 left-0 justify-between gap-5 bg-white rounded-4xl px-4">
         <motion.div
           initial={false}
@@ -85,7 +91,7 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
           }}
           className="overflow-hidden w-full"
         >
-          <ul className="w-full grid lg:grid-cols-5 sm:grid-cols-3 grid-cols-2 items-center justify-between gap-5 text-center py-2 ">
+          <ul className="w-full grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-2 items-center justify-between gap-5 text-center py-2 ">
             {loading ? (
               <li className="col-span-full py-4 text-secondary-color">
                 Loading categories...
@@ -102,11 +108,10 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
               categories.map((category) => (
                 <li
                   key={category.id}
-                  className={`cursor-pointer py-4 rounded-3xl text-xl font-semibold text-secondary-color hover:bg-main-color hover:text-white ${
-                    selectedCategoryId === category.id
-                      ? " bg-main-color text-white"
-                      : ""
-                  }`}
+                  className={`cursor-pointer py-4 rounded-3xl text-xl font-semibold text-secondary-color hover:bg-main-color hover:text-white ${selectedCategoryId === category.id
+                    ? " bg-main-color text-white"
+                    : ""
+                    }`}
                   onClick={() => handleCategoryClick(category.id)}
                 >
                   {category.name.length > 12

@@ -1,14 +1,14 @@
 "use client";
 import Image from "next/image";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onClick, isInCart }: { product: any; onClick: any; isInCart?: boolean }) => {
   return (
     <div
-      className="flex flex-col gap-5 rounded-4xl bg-white aspect-27/25"
-      onClick={() => console.log("clicked")}
+      className={`flex flex-col gap-5 rounded-4xl bg-white aspect-27/25 cursor-pointer ${isInCart ? "border-3 border-main-color box-border" : ""}`}
+      onClick={() => onClick(product)}
     >
       <Image
-        src={product.imageUrl}
+        src={product.imageUrl || "/images/product.jpg"}
         alt={product.name}
         width={300}
         height={300}
@@ -16,9 +16,8 @@ const ProductCard = ({ product }) => {
       />
       <div className="flex flex-col items-center justify-center gap-2 pb-5">
         <span
-          className={`text-md font-medium text-white px-5 rounded-lg ${
-            !product.stockQuantity ? "bg-secondary-color" : "bg-main-color"
-          }`}
+          className={`text-md font-medium text-white px-5 rounded-lg ${!product.stockQuantity ? "bg-secondary-color" : "bg-main-color"
+            }`}
         >
           {product.stockQuantity} peices left
         </span>

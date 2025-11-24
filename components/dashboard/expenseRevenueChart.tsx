@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { getAuthToken } from "@/lib/auth";
 import {
   BarChart,
   Bar,
@@ -23,11 +24,17 @@ const ExpenseRevenueChart = () => {
   const [chartData, setChartData] = useState<{ name: string; revenue: number; expense: number }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+
+  const token = getAuthToken();
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/financialstats?period=${activeTab}`);
+        const res = await fetch(`/api/dashboard/financialstats?period=${activeTab}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch financial stats");
         const data: FinancialData[] = await res.json();
 
