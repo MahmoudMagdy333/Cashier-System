@@ -20,7 +20,7 @@ const TopSellingProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("/api/dashboard/topselling?count=4", {
+        const res = await fetch("/api/Dashboard/topselling?count=4", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

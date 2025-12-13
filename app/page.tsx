@@ -20,7 +20,7 @@ export default function Login() {
   useEffect(() => {
     const fetchUsernames = async () => {
       try {
-        const res = await fetch("/auth/users");
+        const res = await fetch("/api/Auth/users");
         if (res.ok) {
           const data = await res.json();
           setUsernames(data);
@@ -45,7 +45,7 @@ export default function Login() {
     };
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/Auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),

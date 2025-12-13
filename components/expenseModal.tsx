@@ -46,7 +46,7 @@ export default function ExpenseModal({
         const fetchCategories = async () => {
             try {
                 setCategoriesLoading(true);
-                const res = await fetch('/api/expenses/categories', {
+                const res = await fetch('/api/Expenses/categories', {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

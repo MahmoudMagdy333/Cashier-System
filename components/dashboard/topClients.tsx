@@ -27,7 +27,7 @@ const TopClients = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await fetch("/api/dashboard/topclients?count=4", {
+        const res = await fetch("/api/Dashboard/topclients?count=4", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

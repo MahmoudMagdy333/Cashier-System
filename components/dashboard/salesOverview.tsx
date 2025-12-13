@@ -18,7 +18,7 @@ const SalesOverview = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/salesovertime/?period=${activeTab}`, {
+        const res = await fetch(`/api/Dashboard/salesovertime/?period=${activeTab}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -60,7 +60,7 @@ const ExpensesPage = () => {
             params.append("pageNumber", currentPage.toString());
             params.append("pageSize", pageSize.toString());
 
-            const response = await fetch(`/api/expenses?${params.toString()}`, {
+            const response = await fetch(`/api/Expenses?${params.toString()}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -100,7 +100,7 @@ const ExpensesPage = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const response = await fetch("/api/expenses/summary", {
+                const response = await fetch("/api/Expenses/summary", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

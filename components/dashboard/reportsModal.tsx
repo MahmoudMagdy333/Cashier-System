@@ -55,7 +55,7 @@ export function ReportsModal({ isOpen, onClose }: ReportsModalProps) {
                 params.append("date", date)
             }
 
-            const res = await fetch(`/api/reports?${params.toString()}`, {
+            const res = await fetch(`/api/Reports?${params.toString()}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -122,7 +122,7 @@ export function ReportsModal({ isOpen, onClose }: ReportsModalProps) {
 
     const handleDownload = async (id: number, title: string) => {
         try {
-            const res = await fetch(`/api/reports/${id}/download`, {
+            const res = await fetch(`/api/Reports/${id}/download`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

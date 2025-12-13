@@ -44,7 +44,7 @@ export default function UserManagementPage() {
       params.append("pageNumber", currentPage.toString());
       params.append("pageSize", pageSize.toString());
 
-      const res = await fetch(`/api/users?${params.toString()}`, {
+      const res = await fetch(`/api/Admin/users?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -103,7 +103,7 @@ export default function UserManagementPage() {
   const handleDeleteUser = async (id: number) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur?")) {
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        const res = await fetch(`/api/Admin/users/${id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -129,7 +129,7 @@ export default function UserManagementPage() {
       let res;
       if (selectedUser && selectedUser.id) {
         // Update existing user
-        res = await fetch(`/api/users/${selectedUser.id}`, {
+        res = await fetch(`/api/Admin/users/${selectedUser.id}`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -139,7 +139,7 @@ export default function UserManagementPage() {
         });
       } else {
         // Create new user
-        res = await fetch("/api/users", {
+        res = await fetch("/api/Admin/users", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

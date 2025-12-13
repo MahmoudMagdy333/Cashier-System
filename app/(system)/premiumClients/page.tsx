@@ -28,7 +28,7 @@ export default function PremiumClientsPage() {
       params.append("pageNumber", currentPage.toString());
       params.append("pageSize", pageSize.toString());
 
-      const res = await fetch(`/api/customers?${params.toString()}`, {
+      const res = await fetch(`/api/Customers?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -68,7 +68,7 @@ export default function PremiumClientsPage() {
       let res;
       if (client.id && client.id !== 0) {
         // Update existing client
-        res = await fetch(`/api/customers/${client.id}`, {
+        res = await fetch(`/api/Customers/${client.id}`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,7 +78,7 @@ export default function PremiumClientsPage() {
         });
       } else {
         // Create new client
-        res = await fetch("/api/customers", {
+        res = await fetch("/api/Customers", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -105,7 +105,7 @@ export default function PremiumClientsPage() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce client?")) return;
 
     try {
-      const res = await fetch(`/api/customers/${client.id}`, {
+      const res = await fetch(`/api/Customers/${client.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

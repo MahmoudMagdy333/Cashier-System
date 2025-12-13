@@ -27,7 +27,7 @@ export function CashierNav({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/categories", {
+        const res = await fetch("/api/Categories", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -148,7 +148,7 @@ const Products = () => {
         params.append("pageNumber", currentPage.toString());
         params.append("pageSize", pageSize.toString());
 
-        const res = await fetch(`/api/products?${params.toString()}`, {
+        const res = await fetch(`/api/Products?${params.toString()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -205,14 +205,14 @@ const Products = () => {
       if (updatedProduct.id) {
         console.log(updatedProduct);
         // Update existing product
-        res = await fetch(`/api/products/${updatedProduct.id}`, {
+        res = await fetch(`/api/Products/${updatedProduct.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(updatedProduct),
         });
       } else {
         // Create new product
-        res = await fetch("/api/products", {
+        res = await fetch("/api/Products", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(updatedProduct),
@@ -237,7 +237,7 @@ const Products = () => {
   const handleDelete = async (id: number) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit?")) {
       try {
-        const res = await fetch(`/api/products/${id}`, {
+        const res = await fetch(`/api/Products/${id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });

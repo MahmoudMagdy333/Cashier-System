@@ -59,7 +59,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const token = getAuthToken();
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/categories", {
+      const res = await fetch("/api/Categories", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -108,7 +108,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     try {
       const token = getAuthToken();
-      const res = await fetch("/api/images/upload", {
+      const res = await fetch("/api/Images/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

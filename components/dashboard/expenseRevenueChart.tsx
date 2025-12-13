@@ -30,7 +30,7 @@ const ExpenseRevenueChart = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/financialstats?period=${activeTab}`, {
+        const res = await fetch(`/api/Dashboard/financialstats?period=${activeTab}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

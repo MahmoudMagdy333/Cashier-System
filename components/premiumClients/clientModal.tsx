@@ -57,7 +57,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
 
     try {
       const token = getAuthToken();
-      const res = await fetch("/api/images/upload", {
+      const res = await fetch("/api/Images/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

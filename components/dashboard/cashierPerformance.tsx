@@ -28,7 +28,7 @@ const CashierPerformance = () => {
   useEffect(() => {
     const fetchCashiers = async () => {
       try {
-        const res = await fetch("/api/dashboard/cashierperformance", {
+        const res = await fetch("/api/Dashboard/cashierperformance", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch cashier performance");

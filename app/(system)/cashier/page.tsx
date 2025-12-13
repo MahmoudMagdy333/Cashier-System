@@ -236,7 +236,7 @@ function CashierContent() {
     if (idParam) {
       const fetchClient = async () => {
         try {
-          const res = await fetch(`/api/customers/${idParam}`, {
+          const res = await fetch(`/api/Customers/${idParam}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -337,7 +337,7 @@ function CashierContent() {
 
       console.log("Sending Payload:", payload);
 
-      const response = await fetch("/api/sales", {
+      const response = await fetch("/api/Sales", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -18,7 +18,7 @@ const NotificationsCard = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/dashboard/notifications", {
+        const res = await fetch("/api/Dashboard/notifications", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

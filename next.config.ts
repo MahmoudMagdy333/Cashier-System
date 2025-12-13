@@ -4,24 +4,19 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "swagger.quoril.space",
-        port: "",
-        pathname: "/**", // allow all paths
-      },
-      {
-        protocol: "https",
-        hostname: "swagger.quoril.space",
-        port: "",
-        pathname: "/**", // allow all paths over HTTPS too
-      },
+        hostname: "localhost",
+        port: "5000",
+        pathname: "/**", // Allow images from local backend
+      }
     ],
     unoptimized: true,
   },
   async rewrites() {
     return [
       {
-        source: '/api/:path*', // When frontend requests /api/anything...
-        destination: 'https://swagger.quoril.space/api/:path*', // ...send it to the backend.
+        // This directs frontend calls like /api/products -> http://localhost:5000/api/products
+        source: '/api/:path*',
+        destination: 'http://localhost:5000/api/:path*',
       },
     ];
   },

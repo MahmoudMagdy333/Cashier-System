@@ -28,7 +28,7 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/categories", {
+        const response = await fetch("/api/Categories", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

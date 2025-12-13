@@ -75,7 +75,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
     try {
       const token = getAuthToken();
-      const res = await fetch("/api/images/upload", {
+      const res = await fetch("/api/Images/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

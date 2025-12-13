@@ -35,7 +35,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const res = await fetch("/api/dashboard/summary", {
+        const res = await fetch("/api/Dashboard/summary", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

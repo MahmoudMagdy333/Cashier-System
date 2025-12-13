@@ -155,7 +155,7 @@ export default function PremiumClientPage() {
       try {
         setLoading(true);
         const token = getAuthToken();
-        const response = await fetch(`/api/customers/${id}`, {
+        const response = await fetch(`/api/Customers/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -61,7 +61,7 @@ export default function PremiumCashier() {
         const fetchUser = async () => {
             try {
                 console.log(id);
-                const response = await fetch(`/api/customers/${id}`, {
+                const response = await fetch(`/api/Customers/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -200,7 +200,7 @@ export default function PremiumCashier() {
                 customerId: id ? parseInt(id) : null,
             };
 
-            const response = await fetch("/api/sale", {
+            const response = await fetch("/api/Sales", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
