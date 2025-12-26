@@ -72,6 +72,7 @@ export default function CategoryModal({
         }
     }, [isOpen]);
 
+    // Focus input when editing starts
     useEffect(() => {
         if (editingId && inputRef.current) {
             inputRef.current.focus();
