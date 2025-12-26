@@ -29,8 +29,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             router.replace("/");
             return;
         }
-
-        // Check if current route requires specific permissions
         // We check if the pathname starts with the route key to handle sub-routes (e.g. /products/123)
         const requiredPermission = Object.entries(ROUTE_PERMISSIONS).find(([route]) =>
             pathname === route || pathname.startsWith(`${route}/`)
