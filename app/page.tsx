@@ -28,6 +28,7 @@ export default function Login() {
           return;
         }
         console.warn("Username endpoint returned non-OK status; using local fallback", res.status);
+        setOffline(true);
       } catch (err) {
         console.warn("Failed to load usernames from backend; using local fallback", err);
         setOffline(true);
