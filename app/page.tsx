@@ -14,6 +14,7 @@ export default function Login() {
   const [usernames, setUsernames] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedUsername, setSelectedUsername] = useState("");
+  const [offline, setOffline] = useState(false);
   // ------------------------------
 
   // --- FETCH USERNAMES ON LOAD (with static fallback) ---
@@ -29,6 +30,7 @@ export default function Login() {
         console.warn("Username endpoint returned non-OK status; using local fallback", res.status);
       } catch (err) {
         console.warn("Failed to load usernames from backend; using local fallback", err);
+        setOffline(true);
       }
 
       // Fallback: static usernames to avoid depending on backend during local dev
@@ -109,6 +111,12 @@ export default function Login() {
             className="flex flex-col gap-8 w-full mt-9 max-w-md"
             onSubmit={handleLogin}
           >
+            {/* OFFLINE MODE BANNER */}
+            {offline && (
+              <div className="w-full bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-md text-center font-medium">
+                Running in offline mode — using local static usernames
+              </div>
+            )
             {/* USERNAME INPUT WITH DROPDOWN */}
             <motion.div className="relative bg-white border-2 border-main-color rounded-2xl flex items-center">
               <input
