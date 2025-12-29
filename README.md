@@ -14,7 +14,9 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 with your browser to see the result (local development).
+
+For deployment on Vercel, set the `BACKEND_URL` environment variable to your backend origin (for example `https://api.example.com`). The app will use `BACKEND_URL` for API rewrites and image sources in production.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

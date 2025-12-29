@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+const backend = new URL(backendUrl);
+
 const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "localhost",
-        port: "5000",
-        pathname: "/**", // Allow images from local backend
+        protocol: backend.protocol.replace(':', ''),
+        hostname: backend.hostname,
+        port: backend.port || undefined,
+        pathname: '/**', // Allow images from backend
       }
     ],
     unoptimized: true,
@@ -14,9 +17,9 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        // This directs frontend calls like /api/products -> http://localhost:5000/api/products
+        // Route /api/* to the backend defined in BACKEND_URL (set on Vercel)
         source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*',
+        destination: `${backend.origin}/api/:path*`,
       },
     ];
   },
