@@ -42,7 +42,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             }
         }
 
-        setAuthorized(true);
+        queueMicrotask(() => setAuthorized(true));
     }, [router, pathname]);
 
     // Prevent flashing of unauthorized content

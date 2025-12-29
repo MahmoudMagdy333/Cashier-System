@@ -23,6 +23,18 @@ const MONEY_OPTIONS = [
     { value: 1,   img: '/assets/currency/1.png' },
 ];
 
+type KeyButtonProps = { label: React.ReactNode; value: string; span?: number; onPress?: (k: string) => void };
+function KeyButton({ label, value, span = 1, onPress }: KeyButtonProps) {
+    return (
+        <button
+            onClick={() => onPress?.(value)}
+            className={`h-20 bg-white border-2 border-gray-200 rounded-xl text-2xl font-bold hover:border-main-color hover:bg-orange-50 active:scale-95 transition-all ${span === 2 ? 'col-span-2' : ''}`}
+        >
+            {label}
+        </button>
+    );
+}
+
 export default function CashPaymentModal({
     isOpen,
     onClose,
@@ -37,9 +49,11 @@ export default function CashPaymentModal({
 
     useEffect(() => {
         if (isOpen) {
-            setCashGiven(0);
-            setKeypadString("");
-            setInputMode('bills'); // Default to bills
+            queueMicrotask(() => {
+                setCashGiven(0);
+                setKeypadString("");
+                setInputMode('bills'); // Default to bills
+            });
         }
     }, [isOpen]);
 
@@ -84,15 +98,6 @@ export default function CashPaymentModal({
         }
     };
 
-    // Helper for Keypad Buttons
-    const KeyButton = ({ label, value, span = 1 }: { label: React.ReactNode, value: string, span?: number }) => (
-        <button
-            onClick={() => handleKeypadPress(value)}
-            className={`h-20 bg-white border-2 border-gray-200 rounded-xl text-2xl font-bold hover:border-main-color hover:bg-orange-50 active:scale-95 transition-all ${span === 2 ? 'col-span-2' : ''}`}
-        >
-            {label}
-        </button>
-    );
 
     return (
         <GenericModal
@@ -157,18 +162,18 @@ export default function CashPaymentModal({
                         ) : (
                             // NUMERIC KEYPAD
                             <div className="grid grid-cols-3 gap-3 h-full">
-                                <KeyButton label="7" value="7" />
-                                <KeyButton label="8" value="8" />
-                                <KeyButton label="9" value="9" />
-                                <KeyButton label="4" value="4" />
-                                <KeyButton label="5" value="5" />
-                                <KeyButton label="6" value="6" />
-                                <KeyButton label="1" value="1" />
-                                <KeyButton label="2" value="2" />
-                                <KeyButton label="3" value="3" />
-                                <KeyButton label="." value="." />
-                                <KeyButton label="0" value="0" />
-                                <KeyButton label={<Delete />} value="BACKSPACE" />
+                                <KeyButton label="7" value="7" onPress={handleKeypadPress} />
+                                <KeyButton label="8" value="8" onPress={handleKeypadPress} />
+                                <KeyButton label="9" value="9" onPress={handleKeypadPress} />
+                                <KeyButton label="4" value="4" onPress={handleKeypadPress} />
+                                <KeyButton label="5" value="5" onPress={handleKeypadPress} />
+                                <KeyButton label="6" value="6" onPress={handleKeypadPress} />
+                                <KeyButton label="1" value="1" onPress={handleKeypadPress} />
+                                <KeyButton label="2" value="2" onPress={handleKeypadPress} />
+                                <KeyButton label="3" value="3" onPress={handleKeypadPress} />
+                                <KeyButton label="." value="." onPress={handleKeypadPress} />
+                                <KeyButton label="0" value="0" onPress={handleKeypadPress} />
+                                <KeyButton label={<Delete />} value="BACKSPACE" onPress={handleKeypadPress} />
                             </div>
                         )}
                     </div>
