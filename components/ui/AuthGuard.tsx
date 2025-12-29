@@ -20,35 +20,35 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [authorized, setAuthorized] = useState(false);
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        const permissionsStr = localStorage.getItem("permissions");
-        const userPermissions = permissionsStr ? parseInt(permissionsStr, 10) : 0;
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+    //     const permissionsStr = localStorage.getItem("permissions");
+    //     const userPermissions = permissionsStr ? parseInt(permissionsStr, 10) : 0;
 
-        if (!token) {
-            router.replace("/");
-            return;
-        }
-        // We check if the pathname starts with the route key to handle sub-routes (e.g. /products/123)
-        const requiredPermission = Object.entries(ROUTE_PERMISSIONS).find(([route]) =>
-            pathname === route || pathname.startsWith(`${route}/`)
-        )?.[1];
+    //     if (!token) {
+    //         router.replace("/");
+    //         return;
+    //     }
+    //     // We check if the pathname starts with the route key to handle sub-routes (e.g. /products/123)
+    //     const requiredPermission = Object.entries(ROUTE_PERMISSIONS).find(([route]) =>
+    //         pathname === route || pathname.startsWith(`${route}/`)
+    //     )?.[1];
 
-        if (requiredPermission) {
-            if (!hasPermission(userPermissions, requiredPermission)) {
-                // Redirect to home if user lacks permission
-                router.replace("/home");
-                return;
-            }
-        }
+    //     if (requiredPermission) {
+    //         if (!hasPermission(userPermissions, requiredPermission)) {
+    //             // Redirect to home if user lacks permission
+    //             router.replace("/home");
+    //             return;
+    //         }
+    //     }
 
-        queueMicrotask(() => setAuthorized(true));
-    }, [router, pathname]);
+    //     queueMicrotask(() => setAuthorized(true));
+    // }, [router, pathname]);
 
-    // Prevent flashing of unauthorized content
-    if (!authorized) {
-        return null;
-    }
+    // // Prevent flashing of unauthorized content
+    // if (!authorized) {
+    //     return null;
+    // }
 
     return <>{children}</>;
 }
