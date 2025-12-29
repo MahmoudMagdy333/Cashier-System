@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"; // Added useEffect
 import { setAuthData } from "@/lib/auth";
 import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
 import { USERS_FALLBACK } from "@/lib/fallbackData";
+import { USE_FALLBACK } from "@/lib/config";
 import { motion, AnimatePresence } from "motion/react"; // Added AnimatePresence
 
 export default function Login() {
@@ -49,6 +50,21 @@ export default function Login() {
     };
 
     try {
+      if (USE_FALLBACK) {
+        // Simulate login success in fallback mode
+        const mock = {
+          token: "fake-token",
+          fullName: selectedUsername || (formData.get("username") as string) || "Tester",
+          role: "Admin",
+          permissions: "255",
+          imageUrl: "/images/profile.jpg",
+        };
+        setAuthData(mock as any);
+        setLoading(false);
+        window.location.href = "/cashier";
+        return;
+      }
+
       const res = await fetch("/api/Auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
