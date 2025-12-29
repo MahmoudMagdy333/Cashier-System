@@ -75,16 +75,22 @@ export function ReportsModal({ isOpen, onClose }: ReportsModalProps) {
                 },
             })
 
-            if ((data as any).data && Array.isArray((data as any).data)) {
-                setReports((prev) => {
-                    // Filter out duplicates based on ID
-                    const newReports = data.data.filter((newReport: Report) =>
-                        !prev.some((existing) => existing.id === newReport.id)
-                    )
-                    return pageNumber === 1 ? data.data : [...prev, ...newReports]
-                })
-                setHasMore(pageNumber < data.totalPages)
-                if (pageNumber < data.totalPages) {
+            const response = data as { data?: Report[]; totalPages?: number }
+
+            if (response.data && Array.isArray(response.data)) {
+                const incoming = response.data as Report[]
+                // Filter out duplicates based on ID
+                const filtered = incoming.filter((newReport) =>
+                    !reports.some((existing) => existing.id === newReport.id)
+                )
+
+                // Compute next reports outside of the state updater to avoid TS narrowing issues
+                const next = pageNumber === 1 ? incoming : [...reports, ...filtered]
+                setReports(next)
+
+                const totalPages = response.totalPages || 1
+                setHasMore(pageNumber < totalPages)
+                if (pageNumber < totalPages) {
                     setPageNumber(prev => prev + 1)
                 } else {
                     setHasMore(false)
