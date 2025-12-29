@@ -16,7 +16,7 @@ export default function Login() {
   const [selectedUsername, setSelectedUsername] = useState("");
   // ------------------------------
 
-  // --- FETCH USERNAMES ON LOAD ---
+  // --- FETCH USERNAMES ON LOAD (with static fallback) ---
   useEffect(() => {
     const fetchUsernames = async () => {
       try {
@@ -24,11 +24,17 @@ export default function Login() {
         if (res.ok) {
           const data = await res.json();
           setUsernames(data);
+          return;
         }
+        console.warn("Username endpoint returned non-OK status; using local fallback", res.status);
       } catch (err) {
-        console.error("Failed to load usernames", err);
+        console.warn("Failed to load usernames from backend; using local fallback", err);
       }
+
+      // Fallback: static usernames to avoid depending on backend during local dev
+      setUsernames(["admin", "cashier", "tester"]);
     };
+
     fetchUsernames();
   }, []);
 
