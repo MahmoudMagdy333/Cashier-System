@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft, Search, CreditCard, Coins } from "lucide-react";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { PRODUCTS_FALLBACK } from "@/lib/fallbackData";
 import { motion } from "framer-motion";
 import { useReactToPrint } from "react-to-print";
 // Ensure this import matches your file (Default import based on your previous message)
@@ -198,22 +200,18 @@ function CashierContent() {
         params.append("pageSize", pageSize.toString());
 
         const url = `/api/products${params.toString() ? `?${params.toString()}` : ""}`;
-        const response = await fetch(url, {
+        const data = await fetchJsonOrFallback(url, PRODUCTS_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-        const data = await response.json();
 
-        if (data.data && Array.isArray(data.data)) {
-          setProducts(data.data);
-          setTotalRecords(data.totalRecords || 0);
+        if ((data as any).data && Array.isArray((data as any).data)) {
+          setProducts((data as any).data);
+          setTotalRecords((data as any).totalRecords || 0);
         } else if (Array.isArray(data)) {
-          setProducts(data);
-          setTotalRecords(data.length);
+          setProducts(data as any);
+          setTotalRecords((data as any).length || 0);
         } else {
           setProducts([]);
           setTotalRecords(0);

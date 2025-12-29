@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useState, useEffect } from "react"; // Added useEffect
 
 import { setAuthData } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { USERS_FALLBACK } from "@/lib/fallbackData";
 import { motion, AnimatePresence } from "motion/react"; // Added AnimatePresence
 
 export default function Login() {
@@ -20,19 +22,15 @@ export default function Login() {
   useEffect(() => {
     const fetchUsernames = async () => {
       try {
-        const res = await fetch("/api/Auth/users");
-        if (res.ok) {
-          const data = await res.json();
-          setUsernames(data);
-          return;
-        }
-        console.warn("Username endpoint returned non-OK status; using local fallback", res.status);
+        const data = await fetchJsonOrFallback<string[]>('/api/Auth/users', USERS_FALLBACK);
+        setUsernames(data);
+        return;
       } catch (err) {
         console.warn("Failed to load usernames from backend; using local fallback", err);
       }
 
       // Fallback: static usernames to avoid depending on backend during local dev
-      setUsernames(["admin", "cashier", "tester"]);
+      setUsernames(USERS_FALLBACK);
     };
 
     fetchUsernames();

@@ -8,6 +8,8 @@ import { getColumns } from "@/components/premiumClients/columns";
 import Pagination from "@/components/ui/pagination";
 import { useRouter } from 'next/navigation'; // For App Router
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { CUSTOMERS_FALLBACK } from "@/lib/fallbackData";
 
 export default function PremiumClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -28,17 +30,18 @@ export default function PremiumClientsPage() {
       params.append("pageNumber", currentPage.toString());
       params.append("pageSize", pageSize.toString());
 
-      const res = await fetch(`/api/Customers?${params.toString()}`, {
+      const data = await fetchJsonOrFallback(`/api/Customers?${params.toString()}`, CUSTOMERS_FALLBACK, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Failed to fetch clients");
-      const data = await res.json();
 
-      if (data.data && Array.isArray(data.data)) {
-        setClients(data.data);
-        setTotalRecords(data.totalRecords || 0);
+      if ((data as any).data && Array.isArray((data as any).data)) {
+        setClients((data as any).data);
+        setTotalRecords((data as any).totalRecords || 0);
+      } else if (Array.isArray(data)) {
+        setClients(data as any);
+        setTotalRecords((data as any).length || 0);
       } else {
         setClients([]);
         setTotalRecords(0);

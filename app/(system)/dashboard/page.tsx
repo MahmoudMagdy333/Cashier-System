@@ -12,6 +12,8 @@ import { ShoppingBag, Users } from "lucide-react";
 import NotificationsCard from "@/components/dashboard/alertSection";
 import { ReportsModal } from "@/components/dashboard/reportsModal";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { DASHBOARD_SUMMARY_FALLBACK } from "@/lib/fallbackData";
 
 interface DashboardSummary {
   todaysSales: number;
@@ -35,13 +37,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const res = await fetch("/api/Dashboard/summary", {
+        const data = await fetchJsonOrFallback<DashboardSummary>('/api/Dashboard/summary', DASHBOARD_SUMMARY_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch summary");
-        const data = await res.json();
         setSummary(data);
       } catch (error) {
         console.error("Error fetching dashboard summary:", error);

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import OvalLine from "../ui/ovalLine"; // Ensure this path is correct
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { TOP_CLIENTS_FALLBACK } from "@/lib/fallbackData";
 // --- Types & Mock Data ---
 
 interface ClientData {
@@ -27,24 +29,23 @@ const TopClients = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await fetch("/api/Dashboard/topclients?count=4", {
+        const data = await fetchJsonOrFallback<ClientData[]>('/api/Dashboard/topclients?count=4', TOP_CLIENTS_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch top clients");
-        const data: ClientData[] = await res.json();
-        setClients(data);
+        setClients(Array.isArray(data) ? data : TOP_CLIENTS_FALLBACK);
 
         // Calculate stats
-        if (data.length > 0) {
-          const totalSpent = data.reduce((acc, client) => acc + client.totalSpent, 0);
-          const totalOrders = data.reduce((acc, client) => acc + client.totalOrders, 0);
-          const totalOutstanding = data.reduce((acc, client) => acc + client.outstandingBalance, 0);
+        const arr = Array.isArray(data) ? data : TOP_CLIENTS_FALLBACK;
+        if (arr.length > 0) {
+          const totalSpent = arr.reduce((acc, client) => acc + client.totalSpent, 0);
+          const totalOrders = arr.reduce((acc, client) => acc + client.totalOrders, 0);
+          const totalOutstanding = arr.reduce((acc, client) => acc + client.outstandingBalance, 0);
 
           setStats({
-            avgSpend: totalSpent / data.length,
-            avgOrders: Math.round(totalOrders / data.length),
+            avgSpend: totalSpent / arr.length,
+            avgOrders: Math.round(totalOrders / arr.length),
             totalOutstanding: totalOutstanding,
           });
         }

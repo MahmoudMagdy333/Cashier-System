@@ -10,6 +10,8 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { TextAlignStart } from "lucide-react";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { CATEGORIES_FALLBACK, PRODUCTS_FALLBACK } from "@/lib/fallbackData";
 
 export function CashierNav({
   selectedCategory,
@@ -27,13 +29,11 @@ export function CashierNav({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/Categories", {
+        const data = await fetchJsonOrFallback<{ id: number; name: string }[]>('/api/Categories', CATEGORIES_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch categories");
-        const data = await res.json();
         if (Array.isArray(data)) {
           setCategories(data);
         }
@@ -148,21 +148,19 @@ const Products = () => {
         params.append("pageNumber", currentPage.toString());
         params.append("pageSize", pageSize.toString());
 
-        const res = await fetch(`/api/Products?${params.toString()}`, {
+        const data = await fetchJsonOrFallback<any>(`/api/Products?${params.toString()}`, PRODUCTS_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
 
-        if (data.data && Array.isArray(data.data)) {
+        if (data?.data && Array.isArray(data.data)) {
           setProducts(data.data);
           setTotalRecords(data.totalRecords || 0);
         } else if (Array.isArray(data)) {
           // Fallback for old API structure if needed
           setProducts(data);
-          setTotalRecords(data.length);
+          setTotalRecords(data.length || 0);
         } else {
           console.error("Unexpected API response format", data);
           setProducts([]);

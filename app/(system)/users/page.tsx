@@ -16,6 +16,8 @@ import UserModal from "@/components/userModal"; // Adjust path if needed
 import { User } from "@/types/user";
 import Pagination from "@/components/ui/pagination";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { ADMIN_USERS_FALLBACK } from "@/lib/fallbackData";
 
 export default function UserManagementPage() {
   // State for the list of users
@@ -44,21 +46,18 @@ export default function UserManagementPage() {
       params.append("pageNumber", currentPage.toString());
       params.append("pageSize", pageSize.toString());
 
-      const res = await fetch(`/api/Admin/users?${params.toString()}`, {
+      const data = await fetchJsonOrFallback<User[]>(`/api/Admin/users?${params.toString()}`, ADMIN_USERS_FALLBACK, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
 
-      if (data.data && Array.isArray(data.data)) {
-        setUsers(data.data);
-        setTotalRecords(data.totalRecords || 0);
-      } else if (Array.isArray(data)) {
-        // Fallback for old API structure if needed
+      if (Array.isArray(data)) {
         setUsers(data);
-        setTotalRecords(data.length);
+        setTotalRecords(data.length || 0);
+      } else if (data && Array.isArray((data as any).data)) {
+        setUsers((data as any).data);
+        setTotalRecords((data as any).totalRecords || 0);
       } else {
         setUsers([]);
         setTotalRecords(0);

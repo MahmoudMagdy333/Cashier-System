@@ -3,6 +3,8 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { CASHIER_PERFORMANCE_FALLBACK } from "@/lib/fallbackData";
 
 // Define data types
 interface CashierData {
@@ -28,13 +30,11 @@ const CashierPerformance = () => {
   useEffect(() => {
     const fetchCashiers = async () => {
       try {
-        const res = await fetch("/api/Dashboard/cashierperformance", {
+        const data = await fetchJsonOrFallback<CashierData[]>('/api/Dashboard/cashierperformance', CASHIER_PERFORMANCE_FALLBACK, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch cashier performance");
-        const data: CashierData[] = await res.json();
         // Map API data to display format with French placeholders
-        const mappedData: CashierDisplay[] = data.map((item) => ({
+        const mappedData: CashierDisplay[] = (Array.isArray(data) ? data : CASHIER_PERFORMANCE_FALLBACK).map((item) => ({
           ...item,
           roleId: `Caissier #${item.userId}`,
           avatar: "/images/profile.jpg",

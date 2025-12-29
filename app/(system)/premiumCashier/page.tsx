@@ -8,7 +8,9 @@ import { useState, useEffect } from "react";
 import Pagination from "@/components/ui/pagination";
 import Image from "next/image";
 import { getAuthToken } from "@/lib/auth";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { PRODUCTS_FALLBACK, CUSTOMERS_FALLBACK } from "@/lib/fallbackData";
 
 interface Product {
     id: number;
@@ -27,9 +29,17 @@ export default function PremiumCashier() {
     const [discountPercentage, setDiscountPercentage] = useState<number>(0);
     const [userName, setUserName] = useState<string>("");
 
-    const searchParams = useSearchParams();
     const router = useRouter();
-    const id = searchParams.get("id");
+    const [id, setId] = useState<string | null>(null);
+
+    // Read id from window.location on client to avoid useSearchParams SSR requirement
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('id');
+        setId(q);
+        if (!q) router.push('/premiumClients');
+    }, [router]);
 
     // Cart State
     interface CartItem {
@@ -61,21 +71,14 @@ export default function PremiumCashier() {
         const fetchUser = async () => {
             try {
                 console.log(id);
-                const response = await fetch(`/api/Customers/${id}`, {
+                const data = await fetchJsonOrFallback(`/api/Customers/${id}`, CUSTOMERS_FALLBACK, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                if (!response.ok) {
-                    throw new Error("Failed to fetch user");
-                }
-                const data = await response.json();
-                // Assuming the API returns { data: { discountPercentage: number, fullName: string } } or similar
-                // Adjust based on actual API response structure. 
-                // Based on previous interactions, data might be directly in data or data.data
-                const user = data.data || data;
-                setDiscountPercentage(user.discountPercentage || 0);
-                setUserName(user.fullName || "Client");
+                const user = (data && (data as any).data) ? (data as any).data : data;
+                setDiscountPercentage(user?.discountPercentage || 0);
+                setUserName(user?.fullName || "Client");
             } catch (err) {
                 console.error("Error fetching user:", err);
                 // Optionally redirect on error or show alert
@@ -147,23 +150,19 @@ export default function PremiumCashier() {
                 params.append("pageSize", pageSize.toString());
 
                 const url = `/api/products${params.toString() ? `?${params.toString()}` : ""}`;
-                const response = await fetch(url, {
+                const data = await fetchJsonOrFallback(url, PRODUCTS_FALLBACK, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                if (!response.ok) {
-                    throw new Error("Failed to fetch products");
-                }
-                const data = await response.json();
 
-                if (data.data && Array.isArray(data.data)) {
-                    setProducts(data.data);
-                    setTotalRecords(data.totalRecords || 0);
+                if ((data as any)?.data && Array.isArray((data as any).data)) {
+                    setProducts((data as any).data);
+                    setTotalRecords((data as any).totalRecords || 0);
                 } else if (Array.isArray(data)) {
                     // Fallback for old API structure if needed
-                    setProducts(data);
-                    setTotalRecords(data.length);
+                    setProducts(data as any);
+                    setTotalRecords((data as any).length || 0);
                 } else {
                     setProducts([]);
                     setTotalRecords(0);

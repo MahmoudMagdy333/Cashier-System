@@ -12,6 +12,8 @@ import {
 import DataCard from "@/components/dashboard/dataCard";
 import Pagination from "@/components/ui/pagination";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { DASHBOARD_SUMMARY_FALLBACK } from "@/lib/fallbackData";
 import CategoryModal from "@/components/categoryModal";
 import ExpenseModal from "@/components/expenseModal";
 
@@ -100,18 +102,13 @@ const ExpensesPage = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const response = await fetch("/api/Expenses/summary", {
+                const data = await fetchJsonOrFallback("/api/Expenses/summary", DASHBOARD_SUMMARY_FALLBACK, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
 
-                if (!response.ok) {
-                    throw new Error("Failed to fetch summary");
-                }
-
-                const data = await response.json();
-                setSummaryData(data);
+                setSummaryData(data as any);
             } catch (err) {
                 console.error("Error fetching summary:", err);
             }

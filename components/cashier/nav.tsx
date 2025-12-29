@@ -1,6 +1,8 @@
 "use client";
 import { TextAlignStart } from "lucide-react";
 import { useState, useEffect } from "react";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { CATEGORIES_FALLBACK } from "@/lib/fallbackData";
 import { motion } from "framer-motion";
 import { getAuthToken } from "@/lib/auth";
 
@@ -28,18 +30,14 @@ export default function CashierNav({ onCategoryChange }: CashierNavProps) {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/Categories", {
+            const data = await fetchJsonOrFallback<Category[]>('/api/Categories', CATEGORIES_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-        const data = await response.json();
 
-        const allCategory = { id: -1, name: "All" };
-        const allCategories = [allCategory, ...data];
+        const allCategory = { id: -1, name: 'All' };
+        const allCategories = [allCategory, ...(Array.isArray(data) ? data : CATEGORIES_FALLBACK)];
 
         setCategories(allCategories);
 

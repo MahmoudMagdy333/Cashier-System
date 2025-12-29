@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import GenericModal from "./ui/modal";
 import OvalLine from "./ui/ovalLine";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { CATEGORIES_FALLBACK } from "@/lib/fallbackData";
 
 interface Product {
   id?: number;
@@ -59,18 +61,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const token = getAuthToken();
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/Categories", {
+      const data = await fetchJsonOrFallback("/api/Categories", CATEGORIES_FALLBACK, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data);
-        // Set default category if creating new product and categories exist
-        if (!product && data.length > 0 && !formData.categoryId) {
-          setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
-        }
+      setCategories(Array.isArray(data) ? data : CATEGORIES_FALLBACK);
+      // Set default category if creating new product and categories exist
+      if (!product && Array.isArray(data) && data.length > 0 && !formData.categoryId) {
+        setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
       }
     } catch (error) {
       console.error("Error fetching categories:", error);

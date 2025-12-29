@@ -2,6 +2,8 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { TOP_SELLING_FALLBACK } from "@/lib/fallbackData";
 
 // 1. Define Data Type
 interface Product {
@@ -20,13 +22,11 @@ const TopSellingProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("/api/Dashboard/topselling?count=4", {
+        const data = await fetchJsonOrFallback<Product[]>('/api/Dashboard/topselling?count=4', TOP_SELLING_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch top selling products");
-        const data = await res.json();
         if (Array.isArray(data)) {
           setProducts(data);
         }

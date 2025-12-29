@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BadgePercent,
   Banknote,
@@ -54,9 +54,18 @@ const Sidebar = () => {
     router.push("/");
   };
 
-  const imageUrl = localStorage.getItem("imageUrl");
-  const fullName = localStorage.getItem("fullName");
-  const role = localStorage.getItem("role");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    queueMicrotask(() => {
+      setImageUrl(localStorage.getItem("imageUrl"));
+      setFullName(localStorage.getItem("fullName"));
+      setRole(localStorage.getItem("role"));
+    });
+  }, []);
 
   const isValidUrl =
     imageUrl &&

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import SpendingAreaChart from "@/components/areaChart";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { SALES_OVERTIME_FALLBACK } from "@/lib/fallbackData";
 
 interface SalesData {
   label: string;
@@ -18,20 +20,18 @@ const SalesOverview = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/Dashboard/salesovertime/?period=${activeTab}`, {
+        const data = await fetchJsonOrFallback<SalesData[]>(`/api/Dashboard/salesovertime/?period=${activeTab}`, SALES_OVERTIME_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch sales data");
-        const data: SalesData[] = await res.json();
 
         // Map API data to chart format
         // Assuming API returns { label: "Mon", totalSales: 100 }
         // Chart expects { day: "Mon", amount: 100 }
-        const mappedData = data.map(item => ({
+        const mappedData = (Array.isArray(data) ? data : SALES_OVERTIME_FALLBACK).map((item) => ({
           day: item.label,
-          amount: item.totalSales
+          amount: item.totalSales,
         }));
         setChartData(mappedData);
       } catch (error) {

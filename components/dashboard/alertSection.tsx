@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, XCircle, Info } from "lucide-react";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { NOTIFICATIONS_FALLBACK } from "@/lib/fallbackData";
 interface Notification {
   type: string;
   message: string;
@@ -18,13 +20,11 @@ const NotificationsCard = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/Dashboard/notifications", {
+        const data = await fetchJsonOrFallback<Notification[]>('/api/Dashboard/notifications', NOTIFICATIONS_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch notifications");
-        const data = await res.json();
         if (Array.isArray(data)) {
           setNotifications(data);
         }
