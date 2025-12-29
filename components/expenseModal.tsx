@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth';
+import { fetchJsonOrFallback } from '@/lib/fetchWithFallback';
+import { CATEGORIES_FALLBACK } from '@/lib/fallbackData';
+import { USE_FALLBACK } from '@/lib/config';
 import OvalLine from './ui/ovalLine';
 
 interface Category {
@@ -46,14 +49,12 @@ export default function ExpenseModal({
         const fetchCategories = async () => {
             try {
                 setCategoriesLoading(true);
-                const res = await fetch('/api/Expenses/categories', {
+                const data = USE_FALLBACK ? CATEGORIES_FALLBACK : await fetchJsonOrFallback<Category[]>('/api/Expenses/categories', CATEGORIES_FALLBACK, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                if (!res.ok) throw new Error('Failed to fetch categories');
-                const data = await res.json();
-                setCategories(data);
+                setCategories(data as Category[]);
             } catch (err) {
                 console.error(err);
                 setError('Échec du chargement des catégories');

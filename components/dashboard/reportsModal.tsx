@@ -5,6 +5,9 @@ import { AnimatePresence, motion } from "framer-motion"
 import { FileText, Download, X, Loader2, CalendarIcon, Filter, ChevronDown } from "lucide-react"
 import { format } from "date-fns"
 import { getAuthToken } from "@/lib/auth"
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback"
+import { REPORTS_FALLBACK } from "@/lib/fallbackData"
+import { USE_FALLBACK } from "@/lib/config"
 
 type ReportType = "DailySummary" | "MonthlySummary" | "ProductPerformance"
 
@@ -43,6 +46,17 @@ export function ReportsModal({ isOpen, onClose }: ReportsModalProps) {
         setIsLoading(true)
 
         try {
+            console.info(`Reports.fetchReports called (USE_FALLBACK=${USE_FALLBACK}, page=${pageNumber}, hasMore=${hasMore})`)
+
+            // Short-circuit entirely when using fallback mode to avoid any proxy requests
+            if (USE_FALLBACK) {
+                setReports(REPORTS_FALLBACK.data)
+                setHasMore(false)
+                setPageNumber(1)
+                setIsLoading(false)
+                return
+            }
+
             const params = new URLSearchParams({
                 pageNumber: pageNumber.toString(),
                 pageSize: "10",
@@ -55,17 +69,13 @@ export function ReportsModal({ isOpen, onClose }: ReportsModalProps) {
                 params.append("date", date)
             }
 
-            const res = await fetch(`/api/Reports?${params.toString()}`, {
+            const data = await fetchJsonOrFallback<{ data?: Report[]; totalPages?: number }>(`/api/Reports?${params.toString()}`, REPORTS_FALLBACK, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             })
 
-            if (!res.ok) throw new Error("Failed to fetch reports")
-
-            const data = await res.json()
-
-            if (data.data && Array.isArray(data.data)) {
+            if ((data as any).data && Array.isArray((data as any).data)) {
                 setReports((prev) => {
                     // Filter out duplicates based on ID
                     const newReports = data.data.filter((newReport: Report) =>

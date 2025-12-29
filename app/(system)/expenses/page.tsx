@@ -13,7 +13,8 @@ import DataCard from "@/components/dashboard/dataCard";
 import Pagination from "@/components/ui/pagination";
 import { getAuthToken } from "@/lib/auth";
 import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
-import { DASHBOARD_SUMMARY_FALLBACK } from "@/lib/fallbackData";
+import { EXPENSES_SUMMARY_FALLBACK, EXPENSES_LIST_FALLBACK } from "@/lib/fallbackData";
+import { USE_FALLBACK } from "@/lib/config";
 import CategoryModal from "@/components/categoryModal";
 import ExpenseModal from "@/components/expenseModal";
 
@@ -62,24 +63,18 @@ const ExpensesPage = () => {
             params.append("pageNumber", currentPage.toString());
             params.append("pageSize", pageSize.toString());
 
-            const response = await fetch(`/api/Expenses?${params.toString()}`, {
+            const data = USE_FALLBACK ? EXPENSES_LIST_FALLBACK : await fetchJsonOrFallback<{ data?: Expense[]; totalRecords?: number } | Expense[]>(`/api/Expenses?${params.toString()}`, EXPENSES_LIST_FALLBACK, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch expenses");
-            }
-
-            const data = await response.json();
-
             // Handle potential different response structures
-            if (data.data && Array.isArray(data.data)) {
-                setExpenses(data.data);
-                setTotalRecords(data.totalRecords || 0);
+            if ((data as any).data && Array.isArray((data as any).data)) {
+                setExpenses((data as any).data);
+                setTotalRecords((data as any).totalRecords || 0);
             } else if (Array.isArray(data)) {
-                setExpenses(data);
+                setExpenses(data as Expense[]);
                 setTotalRecords(data.length);
             } else {
                 setExpenses([]);
@@ -102,13 +97,13 @@ const ExpensesPage = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const data = await fetchJsonOrFallback("/api/Expenses/summary", DASHBOARD_SUMMARY_FALLBACK, {
+                        const data = await fetchJsonOrFallback<SummaryData>("/api/Expenses/summary", EXPENSES_SUMMARY_FALLBACK, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
 
-                setSummaryData(data as any);
+                setSummaryData(data);
             } catch (err) {
                 console.error("Error fetching summary:", err);
             }

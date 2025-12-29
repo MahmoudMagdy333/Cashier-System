@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { getAuthToken } from "@/lib/auth";
+import { fetchJsonOrFallback } from "@/lib/fetchWithFallback";
+import { FINANCIAL_STATS_FALLBACK } from "@/lib/fallbackData";
 import {
   BarChart,
   Bar,
@@ -30,13 +32,11 @@ const ExpenseRevenueChart = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/Dashboard/financialstats?period=${activeTab}`, {
+        const data = await fetchJsonOrFallback<FinancialData[]>(`/api/Dashboard/financialstats?period=${activeTab}`, FINANCIAL_STATS_FALLBACK, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch financial stats");
-        const data: FinancialData[] = await res.json();
 
         // Map API data to chart format
         // API returns { label: "Week 3", revenue: 0, expenses: 0, profit: 0 }
@@ -56,7 +56,7 @@ const ExpenseRevenueChart = () => {
     };
 
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, token]);
 
   // Colors
   const colors = {

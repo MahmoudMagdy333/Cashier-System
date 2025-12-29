@@ -23,6 +23,20 @@ export const DASHBOARD_SUMMARY_FALLBACK = {
   discountsChangePercentage: -1.2,
 };
 
+export const EXPENSES_SUMMARY_FALLBACK = {
+  totalAmount: 1234.56,
+  transactionCount: 12,
+  period: "This month",
+};
+
+export const EXPENSES_LIST_FALLBACK = {
+  data: [
+    { id: 1, date: new Date().toISOString(), description: "Ingredients - Flour", amount: 45.5, categoryId: 1, categoryName: "Supplies", recordedByUserName: "Alice" },
+    { id: 2, date: new Date().toISOString(), description: "Electricity Bill", amount: 120.0, categoryId: 2, categoryName: "Utilities", recordedByUserName: "Bob" },
+  ],
+  totalRecords: 2,
+};
+
 export const TOP_SELLING_FALLBACK = [
   { productId: 101, productName: "Bottled Water", totalSold: 150, totalRevenue: 150.0, growthPercentage: 5 },
   { productId: 102, productName: "Coffee", totalSold: 120, totalRevenue: 300.0, growthPercentage: 3 },
@@ -64,3 +78,19 @@ export const SALES_OVERTIME_FALLBACK = [
   { label: "Tue", totalSales: 150 },
   { label: "Wed", totalSales: 120 },
 ];
+
+export const FINANCIAL_STATS_FALLBACK = [
+  { label: "Week 1", revenue: 5000, expenses: 3000, profit: 2000 },
+  { label: "Week 2", revenue: 7000, expenses: 4000, profit: 3000 },
+  { label: "Week 3", revenue: 6000, expenses: 3500, profit: 2500 },
+  { label: "Week 4", revenue: 8000, expenses: 4500, profit: 3500 },
+];
+
+export const REPORTS_FALLBACK = {
+  data: [
+    { id: 1, generatedAt: new Date().toISOString(), type: "DailySummary" },
+    { id: 2, generatedAt: new Date().toISOString(), type: "MonthlySummary" },
+    { id: 3, generatedAt: new Date().toISOString(), type: "ProductPerformance" },
+  ],
+  totalPages: 1,
+};
